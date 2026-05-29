@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Pantalla</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;-webkit-user-select:none;user-select:none;}
+  #img{width:100vw;height:100vh;object-fit:contain;display:block;}
+  #vacio{color:#666;font-family:-apple-system,sans-serif;
+          display:flex;align-items:center;justify-content:center;
+          height:100vh;text-align:center;font-size:5vw;padding:0 5vw;}
+  #error{position:fixed;bottom:8px;left:8px;color:#444;font:10px monospace;}
+</style>
+</head>
+<body>
+<div id="vacio">Esperando seleccion...</div>
+<img id="img" style="display:none" alt="">
+<div id="error"></div>
+
+<script src="config.js"></script>
+<script src="imagenes.js"></script>
+<script>
+let actual = null;
+
+async function comprobar(){
+  try{
+    const r = await fetch(`https://api.jsonbin.io/v3/b/${CONFIG.binId}/latest`, {
+      headers: { "X-Master-Key": CONFIG.masterKey, "X-Bin-Meta": "false" }
+    });
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    const d = await r.json();
+    const nuevo = (d && d.actual) ? d.actual : "";
+    if(nuevo !== actual){
+      actual = nuevo;
+      const img = document.getElementById('img');
+      const vacio = document.getElementById('vacio');
+      const encontrada = IMAGENES.find(x => x.nombre === actual);
+      if(encontrada){
+        img.src = encontrada.datos;
+        img.style.display = 'block';
+        vacio.style.display = 'none';
+      } else {
+        img.style.display = 'none';
+        vacio.style.display = 'flex';
+      }
+    }
+    document.getElementById('error').textContent = '';
+  }catch(e){
+    document.getElementById('error').textContent = 'err: ' + e.message;
+  }
+}
+
+setInterval(comprobar, 1000);
+comprobar();
+
+// Mantener despierta la pantalla del iPad (cuando lo permite el navegador)
+async function mantenerDespierto(){
+  try{
+    if('wakeLock' in navigator){
+      await navigator.wakeLock.request('screen');
+    }
+  }catch(e){}
+}
+document.addEventListener('click', mantenerDespierto, {once:true});
+</script>
+</body>
+</html>
