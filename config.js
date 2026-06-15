@@ -1,6 +1,7 @@
 // CONFIGURACION
-// Si regeneras tu clave en JSONBin, solo cambia el valor de "masterKey" aqui.
+// Si en el futuro tienes que renovar la cuenta de JSONBin,
+// solo cambia el valor de "masterKey" y opcionalmente "binId" aqui.
 const CONFIG = {
-  binId: "6a19664921f9ee59d2990d6d",
-  masterKey: "$2a$10$aIvWm7EpciOE1ggc8IP.pu0Q/aLQ3naKaD8p1UL9h4RlyPzGJdmFa"
+  binId: "6a2fb659f5f4af5e29f3dba6",
+  masterKey: "$2a$10$JrADpBkvXk0FqdxxPVQmDuVBH52abejRFo9dHQ/OQKLAVZzrAovWS"
 };
