@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -53,8 +54,12 @@ async function comprobar(){
   }
 }
 
-setInterval(comprobar, 1000);
+// Comprueba cada 60 segundos para ahorrar peticiones de JSONBin
+setInterval(comprobar, 60000);
 comprobar();
+
+// Si tocas la pantalla, fuerza una comprobacion inmediata
+document.body.addEventListener('click', comprobar);
 
 // Mantener despierta la pantalla del iPad (cuando lo permite el navegador)
 async function mantenerDespierto(){
