@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -23,6 +24,7 @@
           background:#333;color:#eee;font-size:15px;cursor:pointer;}
   .vaciar:active{background:#444;}
   #estado{margin-top:14px;font-size:12px;color:#666;text-align:center;min-height:16px;}
+  .aviso{margin-top:8px;font-size:11px;color:#666;text-align:center;}
 </style>
 </head>
 <body>
@@ -31,6 +33,7 @@
 <div class="grid" id="grid"></div>
 <button class="vaciar" onclick="seleccionar('')">Mostrar nada (pantalla en espera)</button>
 <div id="estado"></div>
+<div class="aviso">⏱ El iPad tarda hasta 1 minuto en actualizarse</div>
 
 <script src="config.js"></script>
 <script src="imagenes.js"></script>
@@ -83,12 +86,13 @@ async function seleccionar(nombre){
       body: JSON.stringify({ actual: nombre })
     });
     if(!r.ok) throw new Error("HTTP " + r.status);
-    document.getElementById('estado').textContent = nombre ? `Mostrando: ${nombre}` : 'Pantalla en espera';
+    document.getElementById('estado').textContent = nombre ? `Enviado: ${nombre}` : 'Apagado enviado';
   }catch(e){
     document.getElementById('estado').textContent = 'Error: ' + e.message;
   }
 }
 
+// Solo lee el estado al cargar la pagina, no en bucle (ahorra peticiones)
 leerEstado();
 </script>
 </body>
