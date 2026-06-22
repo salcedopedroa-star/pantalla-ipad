@@ -30,11 +30,19 @@
 <p class="sub">Toca una imagen para mostrarla en el iPad.</p>
 <div class="grid" id="grid"></div>
 <button class="vaciar" onclick="seleccionar('')">Mostrar nada (pantalla en espera)</button>
-<div id="estado"></div>
+<div id="estado">Conectando...</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-database-compat.js"></script>
 
 <script src="config.js"></script>
 <script src="imagenes.js"></script>
 <script>
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.database();
+const refEstado = db.ref('estado');
+
 let actual = null;
 
 function pintar(){
@@ -55,54 +63,27 @@ function pintar(){
   });
 }
 
-async function leerEstado(){
-  try{
-    const r = await fetch(`https://api.github.com/gists/${CONFIG.gistId}?_=${Date.now()}`, {
-      headers: {
-        "Authorization": "token " + CONFIG.token,
-        "Accept": "application/vnd.github+json"
-      },
-      cache: "no-store"
-    });
-    if(!r.ok) throw new Error("HTTP " + r.status);
-    const d = await r.json();
-    const contenidoArchivo = d.files[CONFIG.fileName].content;
-    const datos = JSON.parse(contenidoArchivo);
-    actual = datos.actual || "";
-    document.getElementById('estado').textContent = actual ? `Mostrando: ${actual}` : 'Pantalla en espera';
-    pintar();
-  }catch(e){
-    document.getElementById('estado').textContent = 'Error: ' + e.message;
-  }
-}
+// Escucha cambios en tiempo real
+refEstado.on('value', (snapshot) => {
+  const data = snapshot.val();
+  actual = (data && data.actual) ? data.actual : "";
+  document.getElementById('estado').textContent = actual ? `Mostrando: ${actual}` : 'Pantalla en espera';
+  pintar();
+}, (error) => {
+  document.getElementById('estado').textContent = 'Error: ' + error.message;
+});
 
 async function seleccionar(nombre){
   actual = nombre;
   pintar();
-  document.getElementById('estado').textContent = nombre ? `Cambiando a: ${nombre}...` : 'Apagando...';
+  document.getElementById('estado').textContent = nombre ? `Enviando: ${nombre}...` : 'Apagando...';
   try{
-    const nuevoContenido = JSON.stringify({ actual: nombre });
-    const r = await fetch(`https://api.github.com/gists/${CONFIG.gistId}`, {
-      method: "PATCH",
-      headers: {
-        "Authorization": "token " + CONFIG.token,
-        "Accept": "application/vnd.github+json",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        files: {
-          [CONFIG.fileName]: { content: nuevoContenido }
-        }
-      })
-    });
-    if(!r.ok) throw new Error("HTTP " + r.status);
+    await refEstado.set({ actual: nombre });
     document.getElementById('estado').textContent = nombre ? `Mostrando: ${nombre}` : 'Pantalla en espera';
   }catch(e){
     document.getElementById('estado').textContent = 'Error: ' + e.message;
   }
 }
-
-leerEstado();
 </script>
 </body>
 </html>
