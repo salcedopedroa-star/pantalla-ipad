@@ -16,55 +16,46 @@
 </style>
 </head>
 <body>
-<div id="vacio">Esperando seleccion...</div>
+<div id="vacio">Conectando...</div>
 <img id="img" style="display:none" alt="">
 <div id="error"></div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-database-compat.js"></script>
 
 <script src="config.js"></script>
 <script src="imagenes.js"></script>
 <script>
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.database();
+const refEstado = db.ref('estado');
+
 let actual = null;
 
-async function comprobar(){
-  try{
-    const r = await fetch(`https://api.github.com/gists/${CONFIG.gistId}?_=${Date.now()}`, {
-      headers: {
-        "Authorization": "token " + CONFIG.token,
-        "Accept": "application/vnd.github+json"
-      },
-      cache: "no-store"
-    });
-    if(!r.ok) throw new Error("HTTP " + r.status);
-    const d = await r.json();
-    const contenidoArchivo = d.files[CONFIG.fileName].content;
-    const datos = JSON.parse(contenidoArchivo);
-    const nuevo = datos.actual || "";
-    if(nuevo !== actual){
-      actual = nuevo;
-      const img = document.getElementById('img');
-      const vacio = document.getElementById('vacio');
-      const encontrada = IMAGENES.find(x => x.nombre === actual);
-      if(encontrada){
-        img.src = encontrada.datos;
-        img.style.display = 'block';
-        vacio.style.display = 'none';
-      } else {
-        img.style.display = 'none';
-        vacio.style.display = 'flex';
-      }
+// Escucha cambios en tiempo real (instantaneo, sin polling)
+refEstado.on('value', (snapshot) => {
+  const data = snapshot.val();
+  const nuevo = (data && data.actual) ? data.actual : "";
+  if (nuevo !== actual) {
+    actual = nuevo;
+    const img = document.getElementById('img');
+    const vacio = document.getElementById('vacio');
+    const encontrada = IMAGENES.find(x => x.nombre === actual);
+    if (encontrada) {
+      img.src = encontrada.datos;
+      img.style.display = 'block';
+      vacio.style.display = 'none';
+    } else {
+      img.style.display = 'none';
+      vacio.style.display = 'flex';
+      vacio.textContent = 'Esperando seleccion...';
     }
-    document.getElementById('error').textContent = '';
-  }catch(e){
-    document.getElementById('error').textContent = 'err: ' + e.message;
   }
-}
-
-// Cada 2 segundos. GitHub permite 5000 peticiones/hora, vamos a 1800/hora
-setInterval(comprobar, 2000);
-comprobar();
-
-// Si tocas la pantalla, fuerza una comprobacion inmediata
-document.body.addEventListener('click', comprobar);
+  document.getElementById('error').textContent = '';
+}, (error) => {
+  document.getElementById('error').textContent = 'err: ' + error.message;
+});
 
 // Mantener despierta la pantalla del iPad
 async function mantenerDespierto(){
